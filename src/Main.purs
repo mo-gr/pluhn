@@ -4,8 +4,8 @@ import Prelude
 
 import Control.Alternative (empty)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Data.Array (catMaybes, head, mapWithIndex, reverse, tail)
+import Control.Monad.Eff.Console (CONSOLE, log, logShow)
+import Data.Array (catMaybes, init, last, mapWithIndex)
 import Data.Foldable (sum)
 import Data.Int (even)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -30,28 +30,38 @@ toDigit '9' = pure 9
 toDigit _   = Nothing
 
 luhnDouble :: Int -> Int
-luhnDouble x = let xx = x * 2 in
-  if xx > 9 then xx - 9
-            else xx
+luhnDouble x = if xx > 9
+               then xx - 9
+               else xx
+               where xx = 2 * x
 
 digitize :: String -> Array Int
 digitize str = catMaybes $ toDigit <$> toCharArray str
 
 process :: Array Int -> Array Int
 process is = mapWithIndex update is
-             where update idx val = if even idx then val else luhnDouble val
+             where update idx val = if even idx
+                                    then val
+                                    else luhnDouble val
 
 luhnDigit :: Array Int -> Int
-luhnDigit ds = mod (9 * (sum <<< reverse <<< fromMaybe empty <<< tail <<< reverse) ds) 10
+luhnDigit = unitDigit
+               <<< (*) 9
+               <<< sum
+               <<< fromMaybe empty
+               <<< init -- reverse tail
+            where
+               unitDigit x = mod x 10
 
 isLuhn :: String -> Boolean
 isLuhn input = let digits = digitize input in
-  case (head <<< reverse) digits of
-    Just head -> head == (luhnDigit $ (process) digits)
+  case last digits of
+    Just last -> last == (luhnDigit <<< process $ digits)
     _ -> false
 
 main :: forall e. Eff (console :: CONSOLE | e) Unit
 main = do
-  log "Hello sailor!"
-  log $ show $ isLuhn valid
-  log $ show $ isLuhn invalid
+  log $ "Valid: " <> valid
+  logShow $ isLuhn valid
+  log $ "Invalid: " <> invalid
+  logShow $ isLuhn invalid
