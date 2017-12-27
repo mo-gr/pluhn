@@ -1,0 +1,14 @@
+{
+    "name": "luhn",
+    "set": "psc-0.11.7",
+    "source": "https://github.com/purescript/package-sets.git",
+    "depends": [
+        "folds",
+        "strings",
+        "maybe",
+        "psci-support",
+        "console",
+        "eff",
+        "prelude"
+    ]
+}
