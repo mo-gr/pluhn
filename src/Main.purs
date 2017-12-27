@@ -2,13 +2,12 @@ module Main where
 
 import Prelude
 
-import Control.Alternative (empty)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log, logShow)
-import Data.Array (catMaybes, init, last, mapWithIndex)
+import Data.Array (catMaybes, mapWithIndex)
 import Data.Foldable (sum)
 import Data.Int (even)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(Nothing))
 import Data.String (toCharArray)
 
 valid :: String
@@ -29,14 +28,14 @@ toDigit '8' = pure 8
 toDigit '9' = pure 9
 toDigit _   = Nothing
 
+digitize :: String -> Array Int
+digitize str = catMaybes $ toDigit <$> toCharArray str
+
 luhnDouble :: Int -> Int
 luhnDouble x = if xx > 9
                then xx - 9
                else xx
                where xx = 2 * x
-
-digitize :: String -> Array Int
-digitize str = catMaybes $ toDigit <$> toCharArray str
 
 process :: Array Int -> Array Int
 process is = mapWithIndex update is
@@ -44,20 +43,15 @@ process is = mapWithIndex update is
                                     then val
                                     else luhnDouble val
 
-luhnDigit :: Array Int -> Int
-luhnDigit = unitDigit
-               <<< (*) 9
-               <<< sum
-               <<< fromMaybe empty
-               <<< init -- reverse tail
-            where
-               unitDigit x = mod x 10
+unitDigit :: Int -> Int
+unitDigit x = mod x 10
 
 isLuhn :: String -> Boolean
-isLuhn input = let digits = digitize input in
-  case last digits of
-    Just last -> last == (luhnDigit <<< process $ digits)
-    _ -> false
+isLuhn = eq 0
+            <<< unitDigit
+            <<< sum
+            <<< process
+            <<< digitize
 
 main :: forall e. Eff (console :: CONSOLE | e) Unit
 main = do
